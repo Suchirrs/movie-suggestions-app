@@ -1,0 +1,134 @@
+-- Before running enter set global "local_infile" = 1 
+-- Also right click on root@localhost in MySQL workbench go to edit connection and then click advanced and add OPT_LOCAL_INFILE=1 to Others:
+-- In addition be sure to change the LOAD DATA LOCAL INFILE file paths if needed.
+
+CREATE DATABASE IF NOT EXISTS imdb_data;
+USE imdb_data;
+
+DROP TABLE IF EXISTS title_akas;
+CREATE TABLE title_akas (
+    titleId VARCHAR(20),
+    ordering INT,
+    title TEXT,
+    region VARCHAR(10),
+    language VARCHAR(10),
+    types TEXT,
+    attributes TEXT,
+    isOriginalTitle BOOLEAN,
+    PRIMARY KEY (titleId, ordering)
+);
+
+DROP TABLE IF EXISTS title_basics;
+CREATE TABLE title_basics (
+    tconst VARCHAR(20) PRIMARY KEY,
+    titleType VARCHAR(20),
+    primaryTitle TEXT,
+    originalTitle TEXT,
+    isAdult BOOLEAN,
+    startYear INT,
+    endYear VARCHAR(4),
+    runtimeMinutes INT,
+    genres TEXT
+);
+
+DROP TABLE IF EXISTS title_crew;
+CREATE TABLE title_crew (
+    tconst VARCHAR(20) PRIMARY KEY,
+    directors TEXT,
+    writers TEXT
+);
+
+DROP TABLE IF EXISTS title_episode;
+CREATE TABLE title_episode (
+    tconst VARCHAR(20) PRIMARY KEY,
+    parentTconst VARCHAR(20),
+    seasonNumber INT,
+    episodeNumber INT
+);
+
+DROP TABLE IF EXISTS title_principals;
+CREATE TABLE title_principals (
+    tconst VARCHAR(20),
+    ordering INT,
+    nconst VARCHAR(20),
+    category VARCHAR(50),
+    job TEXT,
+    characters TEXT,
+    PRIMARY KEY (tconst, ordering)
+);
+
+DROP TABLE IF EXISTS title_ratings;
+CREATE TABLE title_ratings (
+    tconst VARCHAR(20) PRIMARY KEY,
+    averageRating FLOAT,
+    numVotes INT
+);
+
+DROP TABLE IF EXISTS name_basics;
+CREATE TABLE name_basics (
+    nconst VARCHAR(20) PRIMARY KEY,
+    primaryName TEXT,
+    birthYear VARCHAR(4),
+    deathYear VARCHAR(4),
+    primaryProfession TEXT,
+    knownForTitles TEXT
+);
+
+DROP TABLE IF EXISTS user;
+CREATE TABLE user (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    MovieName TEXT NOT NULL,
+    MovieTitle VARCHAR(20) NOT NULL,
+    YearMade INT NOT NULL,
+    UserRating FLOAT CHECK (UserRating >= 0 AND UserRating <= 10),
+    FOREIGN KEY (MovieTitle) REFERENCES title_basics(tconst)
+);
+
+LOAD DATA LOCAL INFILE 'Movie/title.akas.tsv'
+INTO TABLE title_akas
+FIELDS TERMINATED BY '\t'
+LINES TERMINATED BY '\n'
+IGNORE 1 LINES
+(titleId, ordering, title, region, language, types, attributes, isOriginalTitle);
+
+LOAD DATA LOCAL INFILE 'Movie/title.basics.tsv'
+INTO TABLE title_basics
+FIELDS TERMINATED BY '\t'
+LINES TERMINATED BY '\n'
+IGNORE 1 LINES
+(tconst, titleType, primaryTitle, originalTitle, isAdult, startYear, endYear, runtimeMinutes, genres);
+
+LOAD DATA LOCAL INFILE 'Movie/title.crew.tsv'
+INTO TABLE title_crew
+FIELDS TERMINATED BY '\t'
+LINES TERMINATED BY '\n'
+IGNORE 1 LINES
+(tconst, directors, writers);
+
+LOAD DATA LOCAL INFILE 'Movie/title.episode.tsv'
+INTO TABLE title_episode
+FIELDS TERMINATED BY '\t'
+LINES TERMINATED BY '\n'
+IGNORE 1 LINES
+(tconst, parentTconst, seasonNumber, episodeNumber);
+
+LOAD DATA LOCAL INFILE 'Movie/title.principals.tsv'
+INTO TABLE title_principals
+FIELDS TERMINATED BY '\t'
+LINES TERMINATED BY '\n'
+IGNORE 1 LINES
+(tconst, ordering, nconst, category, job, characters);
+
+LOAD DATA LOCAL INFILE 'Movie/title.ratings.tsv'
+INTO TABLE title_ratings
+FIELDS TERMINATED BY '\t'
+LINES TERMINATED BY '\n'
+IGNORE 1 LINES
+(tconst, averageRating, numVotes);
+
+LOAD DATA LOCAL INFILE 'Movie/name.basics.tsv'
+INTO TABLE name_basics
+FIELDS TERMINATED BY '\t'
+LINES TERMINATED BY '\n'
+IGNORE 1 LINES
+(nconst, primaryName, birthYear, deathYear, primaryProfession, knownForTitles);
