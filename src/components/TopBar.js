@@ -7,6 +7,9 @@ const TopBar = () => {
   return (
     <div style={styles.topbar}>
       <div style={styles.leftButtons}>
+        <button onClick={() => navigate("/profile")} style={styles.button}>
+          Profile
+        </button>
         <button onClick={() => navigate("/suggestions")} style={styles.button}>
           Suggestions
         </button>
@@ -15,7 +18,7 @@ const TopBar = () => {
         </button>
       </div>
       <button onClick={() => navigate("/")} style={styles.rightButton}>
-        Sign out
+        Sign Out
       </button>
     </div>
   );
