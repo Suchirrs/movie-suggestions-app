@@ -6,11 +6,16 @@ const TopBar = () => {
 
   return (
     <div style={styles.topbar}>
-      <button onClick={() => navigate("/suggestions")} style={styles.button}>
-        Suggestions
-      </button>
-      <button onClick={() => navigate("/movies")} style={styles.button}>
-        Movies
+      <div style={styles.leftButtons}>
+        <button onClick={() => navigate("/suggestions")} style={styles.button}>
+          Suggestions
+        </button>
+        <button onClick={() => navigate("/movies")} style={styles.button}>
+          Movies
+        </button>
+      </div>
+      <button onClick={() => navigate("/")} style={styles.rightButton}>
+        Sign out
       </button>
     </div>
   );
@@ -19,13 +24,25 @@ const TopBar = () => {
 const styles = {
   topbar: {
     display: "flex",
-    justifyContent: "space-around",
+    justifyContent: "space-between", // Spread out buttons
     alignItems: "center",
     backgroundColor: "#D32F2F", // Red background
-    padding: "10px 0",
+    padding: "10px 20px", // Adjust padding for spacing
     borderBottom: "2px solid #B71C1C", // Slightly darker red border
   },
+  leftButtons: {
+    display: "flex",
+    gap: "10px", // Space between the buttons
+  },
   button: {
+    backgroundColor: "transparent",
+    border: "none",
+    color: "#FFFFFF", // White text
+    fontSize: "16px",
+    fontWeight: "bold",
+    cursor: "pointer",
+  },
+  rightButton: {
     backgroundColor: "transparent",
     border: "none",
     color: "#FFFFFF", // White text

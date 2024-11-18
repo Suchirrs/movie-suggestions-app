@@ -1,17 +1,21 @@
-import React from "react";
-import { BrowserRouter as Router, Route, Routes, BrowserRouter } from "react-router-dom";
-import SignInPage from "./pages/SignInPage";
-import SuggestionsPage from "./pages/SuggestionsPage";
-import MoviesPage from "./pages/MoviesPage"; // Import Movies Page
+import React, { useState } from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import SignIn from './pages/SignInPage';
+import Suggestions from './pages/SuggestionsPage';
+import Movies from './pages/MoviesPage';
 
-const App = () => {
+function App() {
+  const [name, setName] = useState('Guest');
+
   return (
+    <Router>
       <Routes>
-        <Route path="/" element={<SignInPage />} />
-        <Route path="/suggestions" element={<SuggestionsPage />} />
-        <Route path="/movies" element={<MoviesPage />} /> {/* Add route for Movies */}
+        <Route path="/" element={<SignIn setName={setName} />} />
+        <Route path="/suggestions" element={<Suggestions name={name} />} />
+        <Route path="/movies" element={<Movies />} />
       </Routes>
+    </Router>
   );
-};
+}
 
 export default App;
