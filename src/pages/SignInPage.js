@@ -1,16 +1,18 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { UserContext } from '../context/UserContext';
 
-const SignIn = ({ setName }) => {
+const SignIn = () => {
   const [input, setInput] = useState('');
   const [error, setError] = useState(false);
   const navigate = useNavigate();
+  const { setUserID } = useContext(UserContext); // Use context
 
   const handleSubmit = () => {
     if (input.trim() === '') {
       setError(true);
     } else {
-      setName(input);
+      setUserID(input); // Save the user ID in context
       navigate('/suggestions');
     }
   };
