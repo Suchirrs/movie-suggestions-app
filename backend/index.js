@@ -283,6 +283,34 @@ app.get('/profile/total-ratings/:userid', (req, res) => {
     });
 });
 
+// Search movies by title
+app.get('/movies/search', (req, res) => {
+    const { query } = req.query;
+    const searchQuery = `
+        SELECT 
+            tb.primaryTitle AS Title, 
+            nb.primaryName AS Director, 
+            tb.genres,
+            tr.averageRating
+        FROM 
+            title_basics tb
+        JOIN title_crew tc ON tb.tconst = tc.tconst
+        JOIN name_basics nb ON tc.directors = nb.nconst
+        JOIN title_ratings tr ON tb.tconst = tr.tconst 
+        WHERE 
+            tb.titleType = "movie" 
+            AND tb.primaryTitle LIKE ?
+    `;
+    db.query(searchQuery, [`%${query}%`], (err, results) => {
+        if (err) {
+            console.error('Error executing search query:', err);
+            return res.status(500).json({ error: 'Database query error' });
+        }
+        res.json(results);
+    });
+});
+
+
 // Submit a movie rating (existing endpoint)
 app.post('/ratings', (req, res) => {
     const { tconst, userid, rating } = req.body;
