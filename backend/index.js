@@ -207,6 +207,82 @@ app.get('/suggestions/:userid', (req, res) => {
     });
 });
 
+// Endpoint to fetch top 3 directors
+app.get('/profile/top-directors/:userid', (req, res) => {
+    const userId = req.params.userid;
+
+    const query = `
+        SELECT Director AS name, COUNT(Director) AS count, AVG(rating) AS average
+        FROM (
+            SELECT tb.primaryTitle AS Title, nb.primaryName AS Director, tb.genres, ur.rating
+            FROM user_reviews ur
+            JOIN title_basics tb ON ur.tconst = tb.tconst
+            JOIN title_crew tc ON tb.tconst = tc.tconst
+            JOIN name_basics nb ON tc.directors = nb.nconst
+            WHERE ur.userid = ?
+        ) AS sub
+        GROUP BY Director
+        ORDER BY (LOG(COUNT(Director) + 1) * AVG(rating)) DESC
+        LIMIT 3
+    `;
+
+    db.query(query, [userId], (err, results) => {
+        if (err) {
+            console.error('Error executing query:', err);
+            return res.status(500).json({ error: 'Database query error' });
+        }
+        res.json(results);
+    });
+});
+
+// Endpoint to fetch top 3 genres
+app.get('/profile/top-genres/:userid', (req, res) => {
+    const userId = req.params.userid;
+
+    const query = `
+        SELECT genres AS name, COUNT(genres) AS count, AVG(rating) AS average
+        FROM (
+            SELECT tb.primaryTitle AS Title, nb.primaryName AS Director, tb.genres, ur.rating
+            FROM user_reviews ur
+            JOIN title_basics tb ON ur.tconst = tb.tconst
+            JOIN title_crew tc ON tb.tconst = tc.tconst
+            JOIN name_basics nb ON tc.directors = nb.nconst
+            WHERE ur.userid = ?
+        ) AS sub
+        GROUP BY genres
+        ORDER BY (LOG(COUNT(genres) + 1) * AVG(rating)) DESC
+        LIMIT 3
+    `;
+
+    db.query(query, [userId], (err, results) => {
+        if (err) {
+            console.error('Error executing query:', err);
+            return res.status(500).json({ error: 'Database query error' });
+        }
+        res.json(results);
+    });
+});
+
+// Endpoint to fetch total ratings
+app.get('/profile/total-ratings/:userid', (req, res) => {
+    const userId = req.params.userid;
+
+    const query = `
+        SELECT COUNT(userid) AS count
+        FROM user_reviews
+        WHERE userid = ?
+        GROUP BY userid;
+    `;
+
+    db.query(query, [userId], (err, results) => {
+        if (err) {
+            console.error('Error executing query:', err);
+            return res.status(500).json({ error: 'Database query error' });
+        }
+        res.json({ totalRatings: results[0]?.count || 0 });
+    });
+});
+
 // Submit a movie rating (existing endpoint)
 app.post('/ratings', (req, res) => {
     const { tconst, userid, rating } = req.body;
