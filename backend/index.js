@@ -195,9 +195,73 @@ app.get('/movies/director', async (req, res) => {
     }
 });
 
-// 4. Fetch user recommendations 
+// // 4. Fetch user recommendations 
+// app.get('/suggestions/:userid', async (req, res) => {
+//     const userId = req.params.userid;
+//     const query = `
+//         WITH similarityMetic AS (
+//             SELECT 
+//                 u1.userid AS target_user,
+//                 u2.userid AS similar_user,
+//                 AVG(u1.rating * u2.rating) AS similarity
+//             FROM user_reviews u1
+//             JOIN user_reviews u2 ON u1.tconst = u2.tconst
+//             WHERE u1.userid != u2.userid
+//                   AND u1.userid LIKE ?
+//             GROUP BY u1.userid, u2.userid
+//         ),
+//         similarUsers AS (
+//             SELECT similar_user, similarity
+//             FROM similarityMetic
+//             ORDER BY similarity DESC
+//         ),
+//         myReviews AS (
+//             SELECT tconst
+//             FROM user_reviews
+//             WHERE userid LIKE ?
+//         )
+//         SELECT 
+//             tb.primaryTitle AS title,
+//             tb.startYear as Year,
+//             nb.primaryName,
+//             tb.genres,
+//             tr.averageRating
+//         FROM user_reviews r
+//         JOIN similarUsers su ON r.userid = su.similar_user
+//         LEFT JOIN myReviews mr ON r.tconst = mr.tconst
+//         JOIN title_basics tb ON r.tconst = tb.tconst 
+//         JOIN title_ratings tr ON r.tconst = tr.tconst 
+//         JOIN title_crew tc ON r.tconst = tc.tconst
+//         JOIN name_basics nb on tc.directors = nb.nconst
+//         WHERE mr.tconst IS NULL 
+//         GROUP BY r.tconst, tb.primaryTitle, tb.startYear, tb.genres, tr.averageRating
+//         ORDER BY tr.averageRating DESC;
+//     `;
+//     console.log(query);
+//     try {
+//         const results = await getCachedOrQuery(`suggestions_${userId}`, () => {
+//             return new Promise((resolve, reject) => {
+//                 db.query(query, [userId, userId], (err, results) => {
+//                     if (err) {
+//                         reject('Error executing query');
+//                     } else {
+//                         resolve(results);
+//                     }
+//                 });
+//             });
+//         });
+//         res.json(results);
+//     } catch (error) {
+//         res.status(500).json({ error: 'Database query error' });
+//     }
+// });
+
 app.get('/suggestions/:userid', async (req, res) => {
     const userId = req.params.userid;
+
+    // Clear the cache for the suggestions endpoint for the specific userId
+    cache.del(`suggestions_${userId}`);
+
     const query = `
         WITH similarityMetic AS (
             SELECT 
@@ -207,7 +271,7 @@ app.get('/suggestions/:userid', async (req, res) => {
             FROM user_reviews u1
             JOIN user_reviews u2 ON u1.tconst = u2.tconst
             WHERE u1.userid != u2.userid
-                  AND u1.userid = ?
+                  AND u1.userid LIKE ?
             GROUP BY u1.userid, u2.userid
         ),
         similarUsers AS (
@@ -218,7 +282,7 @@ app.get('/suggestions/:userid', async (req, res) => {
         myReviews AS (
             SELECT tconst
             FROM user_reviews
-            WHERE userid = ?
+            WHERE userid LIKE ?
         )
         SELECT 
             tb.primaryTitle AS title,
@@ -237,7 +301,11 @@ app.get('/suggestions/:userid', async (req, res) => {
         GROUP BY r.tconst, tb.primaryTitle, tb.startYear, tb.genres, tr.averageRating
         ORDER BY tr.averageRating DESC;
     `;
+
+    console.log(query);
+
     try {
+        // Re-fetch fresh data and cache it again after clearing previous cache
         const results = await getCachedOrQuery(`suggestions_${userId}`, () => {
             return new Promise((resolve, reject) => {
                 db.query(query, [userId, userId], (err, results) => {
@@ -249,6 +317,7 @@ app.get('/suggestions/:userid', async (req, res) => {
                 });
             });
         });
+
         res.json(results);
     } catch (error) {
         res.status(500).json({ error: 'Database query error' });
