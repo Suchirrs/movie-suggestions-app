@@ -1,18 +1,19 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import TopBar from "../components/TopBar";
+import { UserContext } from '../context/UserContext';
 
 const Profile = () => {
     const [userProfile, setUserProfile] = useState(null);
     const navigate = useNavigate();
-    const userId = "Test"; // Replace this with actual dynamic userId
+    const { userID } = useContext(UserContext);
 
     useEffect(() => {
         const fetchProfileData = async () => {
             try {
-                const topDirectorsResponse = await fetch(`http://localhost:5000/profile/top-directors/${userId}`);
-                const topGenresResponse = await fetch(`http://localhost:5000/profile/top-genres/${userId}`);
-                const totalRatingsResponse = await fetch(`http://localhost:5000/profile/total-ratings/${userId}`);
+                const topDirectorsResponse = await fetch(`http://localhost:5000/profile/top-directors/${userID}`);
+                const topGenresResponse = await fetch(`http://localhost:5000/profile/top-genres/${userID}`);
+                const totalRatingsResponse = await fetch(`http://localhost:5000/profile/total-ratings/${userID}`);
 
                 const topDirectors = await topDirectorsResponse.json();
                 const topGenres = await topGenresResponse.json();
@@ -29,7 +30,7 @@ const Profile = () => {
         };
 
         fetchProfileData();
-    }, [userId]);
+    }, [userID]);
 
     const styles = {
         pageContainer: {
