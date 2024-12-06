@@ -103,7 +103,7 @@ const Profile = () => {
                 {userProfile ? (
                     <>
                         <div style={styles.section}>
-                            <h3 style={styles.sectionTitle}>Top 3 Genres</h3>
+                            <h3 style={styles.sectionTitle}>Your Top Movie Categories</h3>
                             <ul style={styles.list}>
                                 {userProfile.topGenres.map((genre, index) => (
                                     <li key={index} style={styles.listItem}>
@@ -116,7 +116,7 @@ const Profile = () => {
                             </ul>
                         </div>
                         <div style={styles.section}>
-                            <h3 style={styles.sectionTitle}>Top 3 Directors</h3>
+                            <h3 style={styles.sectionTitle}>Your Top Directors</h3>
                             <ul style={styles.list}>
                                 {userProfile.topDirectors.map((director, index) => (
                                     <li key={index} style={styles.listItem}>
