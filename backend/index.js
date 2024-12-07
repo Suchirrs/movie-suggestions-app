@@ -195,8 +195,68 @@ app.get('/movies/director', async (req, res) => {
     }
 });
 
-// 4. Fetch user recommendations 
-app.get('/suggestions/:userid', async (req, res) => {
+// // 4. Fetch user recommendations 
+// app.get('/suggestions/:userid', async (req, res) => {
+//     const userId = req.params.userid;
+//     const query = `
+//         WITH similarityMetic AS (
+//             SELECT 
+//                 u1.userid AS target_user,
+//                 u2.userid AS similar_user,
+//                 AVG(u1.rating * u2.rating) AS similarity
+//             FROM user_reviews u1
+//             JOIN user_reviews u2 ON u1.tconst = u2.tconst
+//             WHERE u1.userid != u2.userid
+//                   AND u1.userid = ?
+//             GROUP BY u1.userid, u2.userid
+//         ),
+//         similarUsers AS (
+//             SELECT similar_user, similarity
+//             FROM similarityMetic
+//             ORDER BY similarity DESC
+//         ),
+//         myReviews AS (
+//             SELECT tconst
+//             FROM user_reviews
+//             WHERE userid = ?
+//         )
+//         SELECT 
+//             tb.primaryTitle AS title,
+//             tb.startYear as Year,
+//             nb.primaryName,
+//             tb.genres,
+//             tr.averageRating
+//         FROM user_reviews r
+//         JOIN similarUsers su ON r.userid = su.similar_user
+//         LEFT JOIN myReviews mr ON r.tconst = mr.tconst
+//         JOIN title_basics tb ON r.tconst = tb.tconst 
+//         JOIN title_ratings tr ON r.tconst = tr.tconst 
+//         JOIN title_crew tc ON r.tconst = tc.tconst
+//         JOIN name_basics nb on tc.directors = nb.nconst
+//         WHERE mr.tconst IS NULL 
+//         GROUP BY r.tconst, tb.primaryTitle, tb.startYear, tb.genres, tr.averageRating
+//         ORDER BY tr.averageRating DESC;
+//     `;
+//     try {
+//         const results = await getCachedOrQuery(`suggestions_${userId}`, () => {
+//             return new Promise((resolve, reject) => {
+//                 db.query(query, [userId, userId], (err, results) => {
+//                     if (err) {
+//                         reject('Error executing query');
+//                     } else {
+//                         resolve(results);
+//                     }
+//                 });
+//             });
+//         });
+//         res.json(results);
+//     } catch (error) {
+//         res.status(500).json({ error: 'Database query error' });
+//     }
+// });
+
+// Fetch user recommendations 
+app.get('/suggestions/:userid', (req, res) => {
     const userId = req.params.userid;
     const query = `
         WITH similarityMetic AS (
@@ -237,22 +297,70 @@ app.get('/suggestions/:userid', async (req, res) => {
         GROUP BY r.tconst, tb.primaryTitle, tb.startYear, tb.genres, tr.averageRating
         ORDER BY tr.averageRating DESC;
     `;
-    try {
-        const results = await getCachedOrQuery(`suggestions_${userId}`, () => {
-            return new Promise((resolve, reject) => {
-                db.query(query, [userId, userId], (err, results) => {
-                    if (err) {
-                        reject('Error executing query');
-                    } else {
-                        resolve(results);
-                    }
-                });
-            });
-        });
+    
+    db.query(query, [userId, userId], (err, results) => {
+        if (err) {
+            console.error('Error executing query:', err);
+            return res.status(500).json({ error: 'Database query error' });
+        }
         res.json(results);
-    } catch (error) {
-        res.status(500).json({ error: 'Database query error' });
-    }
+    });
+});
+
+// Endpoint to fetch top 3 directors
+app.get('/profile/top-directors/:userid', (req, res) => {
+    const userId = req.params.userid;
+
+    const query = `
+        SELECT Director AS name, COUNT(Director) AS count, AVG(rating) AS average
+        FROM (
+            SELECT tb.primaryTitle AS Title, nb.primaryName AS Director, tb.genres, ur.rating
+            FROM user_reviews ur
+            JOIN title_basics tb ON ur.tconst = tb.tconst
+            JOIN title_crew tc ON tb.tconst = tc.tconst
+            JOIN name_basics nb ON tc.directors = nb.nconst
+            WHERE ur.userid = ?
+        ) AS sub
+        GROUP BY Director
+        ORDER BY (LOG(COUNT(Director) + 1) * AVG(rating)) DESC
+        LIMIT 3
+    `;
+
+    db.query(query, [userId], (err, results) => {
+        if (err) {
+            console.error('Error executing query:', err);
+            return res.status(500).json({ error: 'Database query error' });
+        }
+        res.json(results);
+    });
+});
+
+// Endpoint to fetch top 3 genres
+app.get('/profile/top-genres/:userid', (req, res) => {
+    const userId = req.params.userid;
+
+    const query = `
+        SELECT genres AS name, COUNT(genres) AS count, AVG(rating) AS average
+        FROM (
+            SELECT tb.primaryTitle AS Title, nb.primaryName AS Director, tb.genres, ur.rating
+            FROM user_reviews ur
+            JOIN title_basics tb ON ur.tconst = tb.tconst
+            JOIN title_crew tc ON tb.tconst = tc.tconst
+            JOIN name_basics nb ON tc.directors = nb.nconst
+            WHERE ur.userid = ?
+        ) AS sub
+        GROUP BY genres
+        ORDER BY (LOG(COUNT(genres) + 1) * AVG(rating)) DESC
+        LIMIT 3
+    `;
+
+    db.query(query, [userId], (err, results) => {
+        if (err) {
+            console.error('Error executing query:', err);
+            return res.status(500).json({ error: 'Database query error' });
+        }
+        res.json(results);
+    });
 });
 
 // 5. Search movies by title
